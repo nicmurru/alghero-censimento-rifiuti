@@ -28,7 +28,7 @@
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family:Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
@@ -44,7 +44,8 @@
                 <!-- Input Foto --><div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">1. Foto</label>
                     <div class="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-3">
-                        <input type="file" id="photoFile" name="photoFile" accept="image/*" required
+                        <!-- MODIFICA: Rimosso 'required' da questo input -->
+                        <input type="file" id="photoFile" name="photoFile" accept="image/*"
                                class="block w-full text-sm text-gray-500 rounded-lg border border-gray-300 cursor-pointer
                                       file:mr-4 file:py-2 file:px-4
                                       file:rounded-l-lg file:border-0
@@ -127,6 +128,8 @@
 
         // Event listener per "Scegli File"
         photoFileInput.addEventListener('change', (event) => {
+            // Se l'utente sceglie un file, pulisce l'input della fotocamera (e viceversa)
+            cameraInput.value = null; 
             currentImageFile = event.target.files[0];
             updatePreview(currentImageFile);
         });
@@ -138,6 +141,8 @@
 
         // Event listener per l'input della fotocamera
         cameraInput.addEventListener('change', (event) => {
+            // Se l'utente scatta una foto, pulisce l'input del file
+            photoFileInput.value = null; 
             currentImageFile = event.target.files[0];
             updatePreview(currentImageFile);
         });
@@ -164,6 +169,8 @@
                 showStatus('Errore: Incolla l\'URL di Google Apps Script nel file index.html (riga 112).', 'error');
                 return;
             }
+            
+            // Il nostro controllo manuale per il file (sostituisce 'required')
             if (!currentImageFile) {
                 showStatus('Errore: Devi selezionare o scattare una foto.', 'error');
                 return;
@@ -236,6 +243,9 @@
                     form.reset();
                     updatePreview(null); // Rimuovi l'anteprima
                     currentImageFile = null; // Resetta il file
+                    // Resetta anche i valori degli input file
+                    photoFileInput.value = null;
+                    cameraInput.value = null;
                     tipoRifiutoSelect.innerHTML = '<option value="" disabled selected>Caricamento tipi...</option>';
                     tipoRifiutoSelect.disabled = true;
                     loadWasteTypes(); // Ricarica i tipi
@@ -244,7 +254,7 @@
                 }
 
             } catch (error) {
-                console.error('Errore durante l\'invio:', error);
+                console.error('Errore durante l'invio:', error);
                 showStatus(`Errore: ${error.message}`, 'error');
             } finally {
                 showLoading(false);
@@ -323,6 +333,8 @@
             return dd;
         }
 
+
+
         function getGpsPosition() {
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
@@ -371,4 +383,7 @@
     </script>
 </body>
 </html>
+
+
+
 

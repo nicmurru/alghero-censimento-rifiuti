@@ -100,204 +100,222 @@
         </form>
     </div>
 
+    <!-- SCRIPT CORRETTO -->
     <script>
         // --- CONFIGURAZIONE ---
-        // URL DELLO SCRIPT INSERITO!
         const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw8rpZuW-njs__UrbEP7HLyvfhba0FayBcR1gxVtxMr-L3d42uhQZ67UxXwcPT-58Di/exec';
         // ----------------------
-
-        // Riferimenti DOM
-        const form = document.getElementById('uploadForm');
-        const submitButton = document.getElementById('submitButton');
-        const loader = document.getElementById('loader');
-        const statusMessage = document.getElementById('statusMessage');
-        const photoFileInput = document.getElementById('photoFile');
-        const takePhotoButton = document.getElementById('takePhotoButton');
-        const cameraInput = document.getElementById('cameraInput'); // Input nascosto per la fotocamera
-        const descriptionInput = document.getElementById('description');
-        const tipoRifiutoSelect = document.getElementById('tipoRifiuto');
-        const quantitaStimataInput = document.getElementById('quantitaStimata');
-        const preview = document.getElementById('preview');
 
         // Variabile per tenere traccia del file selezionato/scattato
         let currentImageFile = null;
 
-        // Al caricamento della pagina, carica i tipi di rifiuto
+        // Esegui tutto solo quando il DOM è pronto
         document.addEventListener('DOMContentLoaded', () => {
+            
+            // Riferimenti DOM (Ora sono sicuri)
+            const form = document.getElementById('uploadForm');
+            const submitButton = document.getElementById('submitButton');
+            const loader = document.getElementById('loader');
+            const statusMessage = document.getElementById('statusMessage');
+            const photoFileInput = document.getElementById('photoFile');
+            const takePhotoButton = document.getElementById('takePhotoButton');
+            const cameraInput = document.getElementById('cameraInput');
+            const descriptionInput = document.getElementById('description');
+            const tipoRifiutoSelect = document.getElementById('tipoRifiuto');
+            const quantitaStimataInput = document.getElementById('quantitaStimata');
+            const preview = document.getElementById('preview');
+
+            // --- INIZIALIZZA ---
+            // Ora questa funzione viene chiamata correttamente
             loadWasteTypes();
-        });
 
-        // Event listener per "Scegli File"
-        photoFileInput.addEventListener('change', (event) => {
-            // Se l'utente sceglie un file, pulisce l'input della fotocamera (e viceversa)
-            cameraInput.value = null; 
-            currentImageFile = event.target.files[0];
-            updatePreview(currentImageFile);
-        });
+            // --- EVENT LISTENER (Ora sono sicuri) ---
 
-        // Event listener per "Scatta Foto"
-        takePhotoButton.addEventListener('click', () => {
-            cameraInput.click(); // Simula il click sull'input nascosto
-        });
+            // Event listener per "Scegli File"
+            photoFileInput.addEventListener('change', (event) => {
+                cameraInput.value = null; 
+                currentImageFile = event.target.files[0];
+                updatePreview(currentImageFile);
+            });
 
-        // Event listener per l'input della fotocamera
-        cameraInput.addEventListener('change', (event) => {
-            // Se l'utente scatta una foto, pulisce l'input del file
-            photoFileInput.value = null; 
-            currentImageFile = event.target.files[0];
-            updatePreview(currentImageFile);
-        });
+            // Event listener per "Scatta Foto"
+            takePhotoButton.addEventListener('click', () => {
+                cameraInput.click(); // Simula il click sull'input nascosto
+            });
 
-        function updatePreview(file) {
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    preview.src = e.target.result;
-                    preview.classList.remove('hidden');
-                };
-                reader.readAsDataURL(file);
-            } else {
-                preview.classList.add('hidden');
-                preview.src = '';
-            }
-        }
-
-        // Gestione Invio Form
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            // Event listener per l'input della fotocamera
+            cameraInput.addEventListener('change', (event) => {
+                photoFileInput.value = null; 
+                currentImageFile = event.target.files[0];
+                updatePreview(currentImageFile);
+            });
             
-            if (GAS_WEB_APP_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-                showStatus('Errore: Incolla l\'URL di Google Apps Script nel file index.html (riga 112).', 'error');
-                return;
-            }
-            
-            // Il nostro controllo manuale per il file (sostituisce 'required')
-            if (!currentImageFile) {
-                showStatus('Errore: Devi selezionare o scattare una foto.', 'error');
-                return;
-            }
-            if (!tipoRifiutoSelect.value) {
-                showStatus('Errore: Seleziona un tipo di rifiuto.', 'error');
-                return;
-            }
-
-            showLoading(true);
-            const description = descriptionInput.value;
-            const tipoRifiuto = tipoRifiutoSelect.value;
-            const quantitaStimata = quantitaStimataInput.value;
-
-            try {
-                // 1. TENTA DI LEGGERE I DATI EXIF
-                showStatus('Lettura metadati (EXIF)...', 'info', false);
-                const exifData = await getExifData(currentImageFile);
+            // Gestione Invio Form
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
                 
-                let latitude = exifData.latitude;
-                let longitude = exifData.longitude;
-                let timestamp = exifData.timestamp;
+                if (GAS_WEB_APP_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                    showStatus('Errore: Incolla l\'URL di Google Apps Script nel file index.html.', 'error');
+                    return;
+                }
+                
+                if (!currentImageFile) {
+                    showStatus('Errore: Devi selezionare o scattare una foto.', 'error');
+                    return;
+                }
+                if (!tipoRifiutoSelect.value) {
+                    showStatus('Errore: Seleziona un tipo di rifiuto.', 'error');
+                    return;
+                }
 
-                // 2. FALLBACK GPS
-                if (!latitude || !longitude) {
-                    showStatus('GPS non trovato nella foto. Richiesta posizione GPS live...', 'info', false);
-                    try {
-                        const position = await getGpsPosition();
-                        latitude = position.coords.latitude;
-                        longitude = position.coords.longitude;
-                    } catch (gpsError) {
-                        throw new Error(`GPS non trovato nella foto e impossibile ottenere posizione live: ${gpsError.message}`);
+                showLoading(true);
+                const description = descriptionInput.value;
+                const tipoRifiuto = tipoRifiutoSelect.value;
+                const quantitaStimata = quantitaStimataInput.value;
+
+                try {
+                    showStatus('Lettura metadati (EXIF)...', 'info', false);
+                    const exifData = await getExifData(currentImageFile);
+                    
+                    let latitude = exifData.latitude;
+                    let longitude = exifData.longitude;
+                    let timestamp = exifData.timestamp;
+
+                    if (!latitude || !longitude) {
+                        showStatus('GPS non trovato nella foto. Richiesta posizione GPS live...', 'info', false);
+                        try {
+                            const position = await getGpsPosition();
+                            latitude = position.coords.latitude;
+                            longitude = position.coords.longitude;
+                        } catch (gpsError) {
+                            throw new Error(`GPS non trovato nella foto e impossibile ottenere posizione live: ${gpsError.message}`);
+                        }
                     }
+
+                    if (!timestamp) {
+                        timestamp = new Date().toISOString();
+                    }
+
+                    showStatus('Preparazione file in corso...', 'info', false);
+                    const base64Data = await readFileAsBase64(currentImageFile);
+
+                    const payload = {
+                        base64Data: base64Data.split(',')[1],
+                        mimeType: currentImageFile.type,
+                        fileName: currentImageFile.name,
+                        description: description,
+                        tipoRifiuto: tipoRifiuto,
+                        quantitaStimata: quantitaStimata,
+                        latitude: latitude,
+                        longitude: longitude,
+                        timestamp: timestamp
+                    };
+
+G                    showStatus('Invio dati in corso...', 'info', false);
+                    const response = await fetch(GAS_WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(payload),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    });
+
+                    const result = await response.json();
+
+                    if (result.status === 'success') {
+                        showStatus('Censimento inviato con successo!', 'success');
+                        form.reset();
+                        updatePreview(null);
+                        currentImageFile = null;
+                        photoFileInput.value = null;
+                        cameraInput.value = null;
+                        tipoRifiutoSelect.innerHTML = '<option value="" disabled selected>Caricamento tipi...</option>';
+                        tipoRifiutoSelect.disabled = true;
+                        loadWasteTypes();
+                    } else {
+                        throw new Error(result.message || 'Errore sconosciuto dal server.');
+                    }
+
+                } catch (error) {
+                    console.error('Errore durante l'invio:', error);
+                    showStatus(`Errore: ${error.message}`, 'error');
+                } finally {
+                    showLoading(false);
                 }
+            });
 
-                // 3. FALLBACK DATA
-                if (!timestamp) {
-                    timestamp = new Date().toISOString();
-                }
+            // --- FUNZIONI HELPER (definite DENTRO o fuori, ma usano var definite sopra) ---
 
-                // 4. PREPARA FILE BASE64
-                showStatus('Preparazione file in corso...', 'info', false);
-                const base64Data = await readFileAsBase64(currentImageFile);
-
-                // 5. COSTRUISCI IL PAYLOAD
-                const payload = {
-                    base64Data: base64Data.split(',')[1],
-                    mimeType: currentImageFile.type,
-                    fileName: currentImageFile.name,
-                    description: description,
-                    tipoRifiuto: tipoRifiuto,
-                    quantitaStimata: quantitaStimata,
-                    latitude: latitude,
-                    longitude: longitude,
-                    timestamp: timestamp
-                };
-
-                // 6. INVIA I DATI
-                showStatus('Invio dati in corso...', 'info', false);
-                const response = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload),
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                });
-
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    showStatus('Censimento inviato con successo!', 'success');
-                    form.reset();
-                    updatePreview(null); // Rimuovi l'anteprima
-                    currentImageFile = null; // Resetta il file
-                    // Resetta anche i valori degli input file
-                    photoFileInput.value = null;
-                    cameraInput.value = null;
-                    tipoRifiutoSelect.innerHTML = '<option value="" disabled selected>Caricamento tipi...</option>';
-                    tipoRifiutoSelect.disabled = true;
-                    loadWasteTypes(); // Ricarica i tipi
+            function updatePreview(file) {
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        preview.src = e.target.result;
+                        preview.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
                 } else {
-                    throw new Error(result.message || 'Errore sconosciuto dal server.');
+                    preview.classList.add('hidden');
+                    preview.src = '';
+                }
+            }
+
+            // Carica l'elenco dei tipi di rifiuto
+            async function loadWasteTypes() {
+                if (GAS_WEB_APP_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                    tipoRifiutoSelect.innerHTML = '<option value="" disabled selected>Configura URL App Script</option>';
+                    return;
                 }
 
-            } catch (error) {
-                console.error('Errore durante l'invio:', error);
-                showStatus(`Errore: ${error.message}`, 'error');
-            } finally {
-                showLoading(false);
+                try {
+                    const response = await fetch(GAS_WEB_APP_URL);
+                    if (!response.ok) {
+                        throw new Error(`Errore di rete: ${response.statusText}`);
+                    }
+                    const result = await response.json();
+
+                    if (result.status === 'success' && result.types && result.types.length > 0) {
+                        tipoRifiutoSelect.innerHTML = '<option value="" disabled selected>Seleziona un tipo...</option>';
+                        result.types.forEach(type => {
+                            const option = document.createElement('option');
+                            option.value = type;
+                            option.textContent = type;
+                            tipoRifiutoSelect.appendChild(option);
+                        });
+                        tipoRifiutoSelect.disabled = false;
+                    } else {
+                        throw new Error(result.message || 'Nessun tipo di rifiuto trovato.');
+                    }
+                } catch (error) {
+                    console.error('Errore nel caricamento dei tipi di rifiuto:', error);
+                    // QUA C'ERA L'ERRORE DI SINTASSI (UN \ DI TROPPO). ORA È CORRETTO.
+                    tipoRifiutoSelect.innerHTML = '<option value="" disabled selected>Errore caricamento tipi</option>';
+                    showStatus(`Errore caricamento tipi: ${error.message}`, 'error', false);
+                }
+            }
+
+            function showLoading(isLoading) {
+                loader.style.display = isLoading ? 'block' : 'none';
+                submitButton.style.display = isLoading ? 'none' : 'block';
+            }
+
+            function showStatus(message, type, hideAfter = true) {
+                statusMessage.style.display = 'block';
+                statusMessage.textContent = message;
+                statusMessage.className = 'p-4 mb-4 rounded-md text-sm'; // Reset classi
+                if (type === 'error') {
+                    statusMessage.classList.add('bg-red-100', 'text-red-700');
+                } else if (type === 'success') {
+                    statusMessage.classList.add('bg-green-100', 'text-green-700');
+                } else { // info
+                    statusMessage.classList.add('bg-blue-100', 'text-blue-700');
+                }
+                if (hideAfter) {
+                    setTimeout(() => { statusMessage.style.display = 'none'; }, 5000);
+                }
             }
         });
-
-        // Carica l'elenco dei tipi di rifiuto
-        async function loadWasteTypes() {
-            if (GAS_WEB_APP_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-                tipoRifiutoSelect.innerHTML = '<option value="" disabled selected>Configura URL App Script</option>';
-                return;
-            }
-
-            try {
-                const response = await fetch(GAS_WEB_APP_URL);
-                if (!response.ok) {
-                    throw new Error(`Errore di rete: ${response.statusText}`);
-                }
-                const result = await response.json();
-
-                if (result.status === 'success' && result.types && result.types.length > 0) {
-                    tipoRifiutoSelect.innerHTML = '<option value="" disabled selected>Seleziona un tipo...</option>';
-                    result.types.forEach(type => {
-                        const option = document.createElement('option');
-                        option.value = type;
-                        option.textContent = type;
-                        tipoRifiutoSelect.appendChild(option);
-                    });
-                    tipoRifiutoSelect.disabled = false;
-                } else {
-                    throw new Error(result.message || 'Nessun tipo di rifiuto trovato.');
-                }
-            } catch (error) {
-                console.error('Errore nel caricamento dei tipi di rifiuto:', error);
-                tipoRifiutoSelect.innerHTML = `<option value="" disabled selected>Errore caricamento tipi</option>`;
-                // CORREZIONE: Aggiunti i backtick (`) attorno al messaggio di errore
-                showStatus(`Errore caricamento tipi: ${error.message}`, 'error', false);
-            }
-        }
-
-
-        // Funzioni per LETTURA EXIF, FALLBACK GPS, etc.
+        
+        // --- FUNZIONI PURE (possono stare fuori dal DOMContentLoaded) ---
+        // Queste non dipendono dal DOM, solo da 'EXIF' (che è globale)
 
         function getExifData(file) {
             return new Promise((resolve) => {
@@ -335,8 +353,6 @@
             return dd;
         }
 
-
-
         function getGpsPosition() {
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) {
@@ -360,27 +376,6 @@
                 reader.onerror = (error) => reject(error);
                 reader.readAsDataURL(file);
             });
-        }
-
-        function showLoading(isLoading) {
-            loader.style.display = isLoading ? 'block' : 'none';
-            submitButton.style.display = isLoading ? 'none' : 'block';
-        }
-
-        function showStatus(message, type, hideAfter = true) {
-            statusMessage.style.display = 'block';
-            statusMessage.textContent = message;
-            statusMessage.className = 'p-4 mb-4 rounded-md text-sm'; // Reset classi
-            if (type === 'error') {
-                statusMessage.classList.add('bg-red-100', 'text-red-700');
-            } else if (type === 'success') {
-                statusMessage.classList.add('bg-green-100', 'text-green-700');
-            } else { // info
-                statusMessage.classList.add('bg-blue-100', 'text-blue-700');
-            }
-            if (hideAfter) {
-                setTimeout(() => { statusMessage.style.display = 'none'; }, 5000);
-            }
         }
     </script>
 </body>
